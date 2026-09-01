@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pharmacy Price Checker</title>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:#f3f4f6;
+  color:#111827
+}
+.app{
+  max-width:620px;
+  margin:auto;
+  min-height:100vh;
+  background:white;
+  padding:20px
+}
+h1{font-size:25px;margin:8px 0}
+.sub{color:#6b7280;margin:0 0 18px}
+
+.camera{
+  background:#111827;
+  border-radius:18px;
+  overflow:hidden;
+  min-height:230px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white
+}
+#reader{width:100%}
+
+.controls,.manual{
+  display:flex;
+  gap:10px;
+  margin:14px 0
+}
+
+.btn{
+  border:0;
+  border-radius:12px;
+  padding:14px 16px;
+  font-weight:700;
+  font-size:16px;
+  flex:1;
+  background:#111827;
+  color:white
+}
+.secondary{background:#e5e7eb;color:#111827}
+
+.manual input{
+  flex:1;
+  padding:13px;
+  border:1px solid #d1d5db;
+  border-radius:11px;
+  font-size:16px
+}
+
+.card{
+  margin-top:18px;
+  padding:18px;
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+  display:none
+}
+
+.price{font-size:38px;font-weight:800;margin:8px 0}
+.old{text-decoration:line-through;color:#6b7280}
+.promo{
+  display:inline-block;
+  background:#dcfce7;
+  color:#166534;
+  padding:5px 9px;
+  border-radius:99px;
+  font-weight:700
+}
+.ean{font-family:monospace;color:#6b7280}
+.status{padding:10px 0;color:#6b7280;text-align:center}
+.error{color:#b91c1c}
+</style>
+</head>
+
+<body>
+<main class="app">
+
+<h1>Pharmacy Price Checker</h1>
+<p class="sub">Point the rear camera at a product barcode.</p>
+
+<div class="camera">
+  <div id="reader"></div>
+</div>
+
+<div id="status" class="status">
+  Tap Start camera to begin.
+</div>
+
+<div class="controls">
+  <button class="btn" id="start">Start camera</button>
+  <button class="btn secondary" id="stop">Stop</button>
+</div>
+
+<div class="manual">
+  <input id="barcode" inputmode="numeric"
+         placeholder="Enter barcode manually">
+  <button class="btn" id="check">Check</button>
+</div>
+
+<section id="card" class="card">
+  <div id="detail"></div>
+  <h2 id="name"></h2>
+  <div id="old"></div>
+  <div class="price" id="price"></div>
+  <div id="promo"></div>
+  <p class="ean" id="ean"></p>
+</section>
+
+</main>
+
+<script>
+const products = {
+  "8594739273832":{
+    name:"Co-codamol 8/500mg",
+    detail:"32 effervescent tablets · Zentiva",
+    price:5.99
+  },
+
+  "5011417589229":{
+    name:"Nurofen Plus",
+    detail:"Ibuprofen + codeine · 24 tablets",
+    price:11.99
+  },
+
+  "5010123722708":{
+    name:"Calpol Sugar Free Infant Suspension",
+    detail:"2+ months · Strawberry flavour",
+    price:3.69,
+    was:4.99
+  }
+};
+
+let scanner;
+let running=false;
+let last="";
+let lastAt=0;
+
+function lookup(code){
+
+  code=String(code).trim();
+
+  document.getElementById("barcode").value=code;
+
+  const p=products[code];
+  const card=document.getElementById("card");
+
+  card.style.display="block";
+
+  document.getElementById("ean").textContent="EAN: "+code;
+
+  if(!p){
+
+    document.getElementById("detail").textContent="";
+    document.getElementById("name").textContent="Product not found";
+    document.getElementById("old").textContent="";
+    document.getElementById("price").textContent="";
+    document.getElementById("promo").textContent=
+      "This barcode is not yet in the catalogue.";
+
+    return;
+  }
+
+  document.getElementById("detail").textContent=p.detail;
+  document.getElementById("name").textContent=p.name;
+  document.getElementById("price").textContent=
+    "£"+p.price.toFixed(2);
+
+  document.getElementById("old").innerHTML=
+    p.was
+      ? '<span class="old">Was £'+p.was.toFixed(2)+'</span>'
+      : "";
+
+  document.getElementById("promo").innerHTML=
+    p.was
+      ? '<span class="promo">Save £'+
+        (p.was-p.price).toFixed(2)+
+        '</span>'
+      : "";
+
+  if(navigator.vibrate) navigator.vibrate(80);
+}
+
+async function startCamera(){
+
+  if(running) return;
+
+  const status=document.getElementById("status");
+
+  try{
+
+    status.textContent="Requesting camera permission…";
+
+    scanner=new Html5Qrcode("reader");
+
+    await scanner.start(
+      {facingMode:"environment"},
+      {
+        fps:12,
+        qrbox:{width:280,height:130},
+        aspectRatio:1.5
+      },
+
+      (barcode)=>{
+
+        const now=Date.now();
+
+        if(barcode===last && now-lastAt<1800) return;
+
+        last=barcode;
+        lastAt=now;
+
+        lookup(barcode);
+
+        status.textContent="Scanned "+barcode;
+      },
+
+      ()=>{}
+    );
+
+    running=true;
+
+    status.textContent=
+      "Camera active — hold a barcode inside the frame.";
+
+  }catch(error){
+
+    status.innerHTML=
+      '<span class="error">Camera could not open. Check Safari camera permission and reload.</span>';
+
+    console.error(error);
+  }
+}
+
+async function stopCamera(){
+
+  if(scanner && running){
+
+    try{
+      await scanner.stop();
+      scanner.clear();
+    }catch(e){}
+
+    running=false;
+
+    document.getElementById("status").textContent=
+      "Camera stopped.";
+  }
+}
+
+document.getElementById("start").onclick=startCamera;
+document.getElementById("stop").onclick=stopCamera;
+
+document.getElementById("check").onclick=()=>{
+  lookup(document.getElementById("barcode").value);
+};
+
+document.getElementById("barcode").addEventListener(
+  "keydown",
+  e=>{
+    if(e.key==="Enter") lookup(e.target.value);
+  }
+);
+
+window.addEventListener("pagehide",stopCamera);
+</script>
+
+</body>
+</html>
