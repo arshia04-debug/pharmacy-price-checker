@@ -3,27 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Pharmacy Price Checker</title>
+<title>MediCare Pharmacy Price Checker</title>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:#f3f4f6;
-  color:#111827
+  color:#111827;
 }
+
 .app{
   max-width:620px;
   margin:auto;
   min-height:100vh;
   background:white;
-  padding:20px
+  padding:20px;
 }
-h1{font-size:25px;margin:8px 0}
-.sub{color:#6b7280;margin:0 0 18px}
+
+.logo-wrap{
+  text-align:center;
+  padding:10px 0 18px;
+}
+
+.logo{
+  width:min(100%,420px);
+  height:auto;
+  display:block;
+  margin:auto;
+}
+
+h1{
+  font-size:25px;
+  margin:8px 0;
+  text-align:center;
+}
+
+.sub{
+  color:#6b7280;
+  margin:0 0 14px;
+  text-align:center;
+}
+
+.catalogue-count{
+  display:table;
+  margin:0 auto 15px;
+  background:#f3f4f6;
+  padding:6px 10px;
+  border-radius:99px;
+  font-size:13px;
+  font-weight:700;
+}
 
 .camera{
   background:#111827;
@@ -33,14 +67,18 @@ h1{font-size:25px;margin:8px 0}
   display:flex;
   align-items:center;
   justify-content:center;
-  color:white
+  color:white;
 }
-#reader{width:100%}
 
-.controls,.manual{
+#reader{
+  width:100%;
+}
+
+.controls,
+.manual{
   display:flex;
   gap:10px;
-  margin:14px 0
+  margin:14px 0;
 }
 
 .btn{
@@ -51,16 +89,21 @@ h1{font-size:25px;margin:8px 0}
   font-size:16px;
   flex:1;
   background:#111827;
-  color:white
+  color:white;
 }
-.secondary{background:#e5e7eb;color:#111827}
+
+.secondary{
+  background:#e5e7eb;
+  color:#111827;
+}
 
 .manual input{
   flex:1;
+  min-width:0;
   padding:13px;
   border:1px solid #d1d5db;
   border-radius:11px;
-  font-size:16px
+  font-size:16px;
 }
 
 .card{
@@ -68,37 +111,74 @@ h1{font-size:25px;margin:8px 0}
   padding:18px;
   border:1px solid #e5e7eb;
   border-radius:16px;
-  display:none
+  display:none;
 }
 
-.price{font-size:38px;font-weight:800;margin:8px 0}
-.old{text-decoration:line-through;color:#6b7280}
+.price{
+  font-size:38px;
+  font-weight:800;
+  margin:8px 0;
+}
+
+.old{
+  text-decoration:line-through;
+  color:#6b7280;
+}
+
 .promo{
   display:inline-block;
   background:#dcfce7;
   color:#166534;
   padding:5px 9px;
   border-radius:99px;
-  font-weight:700
+  font-weight:700;
 }
-.ean{font-family:monospace;color:#6b7280}
-.status{padding:10px 0;color:#6b7280;text-align:center}
-.error{color:#b91c1c}
+
+.ean{
+  font-family:monospace;
+  color:#6b7280;
+}
+
+.status{
+  padding:10px 0;
+  color:#6b7280;
+  text-align:center;
+}
+
+.error{
+  color:#b91c1c;
+}
 </style>
 </head>
 
 <body>
+
 <main class="app">
 
+<div class="logo-wrap">
+  <img
+    src="medicare-logo.jpeg"
+    alt="MediCare Pharmacy Group"
+    class="logo"
+  >
+</div>
+
 <h1>Pharmacy Price Checker</h1>
-<p class="sub">Point the rear camera at a product barcode.</p>
+
+<p class="sub">
+Point the rear camera at a product barcode.
+</p>
+
+<div class="catalogue-count">
+6 products
+</div>
 
 <div class="camera">
   <div id="reader"></div>
 </div>
 
 <div id="status" class="status">
-  Tap Start camera to begin.
+Tap Start camera to begin.
 </div>
 
 <div class="controls">
@@ -107,24 +187,36 @@ h1{font-size:25px;margin:8px 0}
 </div>
 
 <div class="manual">
-  <input id="barcode" inputmode="numeric"
-         placeholder="Enter barcode manually">
+  <input
+    id="barcode"
+    inputmode="numeric"
+    placeholder="Enter barcode manually"
+  >
   <button class="btn" id="check">Check</button>
 </div>
 
 <section id="card" class="card">
+
   <div id="detail"></div>
+
   <h2 id="name"></h2>
+
   <div id="old"></div>
+
   <div class="price" id="price"></div>
+
   <div id="promo"></div>
+
   <p class="ean" id="ean"></p>
+
 </section>
 
 </main>
 
 <script>
+
 const products = {
+
   "8594739273832":{
     name:"Co-codamol 8/500mg",
     detail:"32 effervescent tablets · Zentiva",
@@ -142,7 +234,29 @@ const products = {
     detail:"2+ months · Strawberry flavour",
     price:3.69,
     was:4.99
+  },
+
+  "5000101968051":{
+    name:"Carex Original Shower Gel",
+    detail:"500 ml",
+    price:1.69,
+    was:1.99
+  },
+
+  "5000101968136":{
+    name:"Carex Sensitive Bath Soak",
+    detail:"500 ml",
+    price:1.39,
+    was:1.99
+  },
+
+  "5000101968211":{
+    name:"Carex Moisture Plus Shower Cream",
+    detail:"500 ml",
+    price:1.69,
+    was:1.99
   }
+
 };
 
 let scanner;
@@ -152,7 +266,9 @@ let lastAt=0;
 
 function lookup(code){
 
-  code=String(code).trim();
+  code=String(code)
+    .replace(/\D/g,"")
+    .trim();
 
   document.getElementById("barcode").value=code;
 
@@ -161,7 +277,8 @@ function lookup(code){
 
   card.style.display="block";
 
-  document.getElementById("ean").textContent="EAN: "+code;
+  document.getElementById("ean").textContent=
+    "EAN: "+code;
 
   if(!p){
 
@@ -192,7 +309,9 @@ function lookup(code){
         '</span>'
       : "";
 
-  if(navigator.vibrate) navigator.vibrate(80);
+  if(navigator.vibrate){
+    navigator.vibrate(80);
+  }
 }
 
 async function startCamera(){
@@ -208,25 +327,49 @@ async function startCamera(){
     scanner=new Html5Qrcode("reader");
 
     await scanner.start(
+
       {facingMode:"environment"},
+
       {
         fps:12,
-        qrbox:{width:280,height:130},
-        aspectRatio:1.5
+
+        qrbox:function(viewfinderWidth,viewfinderHeight){
+
+          return{
+            width:Math.floor(viewfinderWidth*0.88),
+            height:Math.min(
+              170,
+              Math.floor(viewfinderHeight*0.42)
+            )
+          };
+
+        },
+
+        aspectRatio:1.777778,
+
+        formatsToSupport:[
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E
+        ]
       },
 
       (barcode)=>{
 
+        const code=String(barcode).replace(/\D/g,"");
         const now=Date.now();
 
-        if(barcode===last && now-lastAt<1800) return;
+        if(code===last && now-lastAt<1800){
+          return;
+        }
 
-        last=barcode;
+        last=code;
         lastAt=now;
 
-        lookup(barcode);
+        lookup(code);
 
-        status.textContent="Scanned "+barcode;
+        status.textContent="Scanned "+code;
       },
 
       ()=>{}
@@ -240,7 +383,9 @@ async function startCamera(){
   }catch(error){
 
     status.innerHTML=
-      '<span class="error">Camera could not open. Check Safari camera permission and reload.</span>';
+      '<span class="error">'+
+      'Camera could not open. Check Safari camera permission and reload.'+
+      '</span>';
 
     console.error(error);
   }
@@ -272,11 +417,14 @@ document.getElementById("check").onclick=()=>{
 document.getElementById("barcode").addEventListener(
   "keydown",
   e=>{
-    if(e.key==="Enter") lookup(e.target.value);
+    if(e.key==="Enter"){
+      lookup(e.target.value);
+    }
   }
 );
 
 window.addEventListener("pagehide",stopCamera);
+
 </script>
 
 </body>
